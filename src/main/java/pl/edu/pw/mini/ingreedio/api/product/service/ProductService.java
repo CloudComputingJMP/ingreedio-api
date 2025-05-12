@@ -66,8 +66,6 @@ public class ProductService {
     private final ModelPatcher<ProductDocument> modelPatcher;
     @Value("${bucket.uri}")
     private String bucketUri;
-    @Value("${'spring.data.mongodb.uri'}")
-    private String dbg;
     @Transactional(readOnly = true)
     public List<ProductDocument> getAllProducts() {
         return productRepository.findAll();
@@ -168,7 +166,6 @@ public class ProductService {
     public ProductDocument uploadImages(long id,MultipartFile bigImg, MultipartFile smallImg)throws ProductNotFoundException {
         try {
             System.out.println(bucketUri);
-            System.out.println(dbg);
             OkHttpClient client=new OkHttpClient().newBuilder().build();
             MediaType mediaType=MediaType.parse("application/png");
             RequestBody smlReq=RequestBody.create(mediaType,smallImg.getBytes());
