@@ -1,5 +1,6 @@
 package pl.edu.pw.mini.ingreedio.api.product.service;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -7,12 +8,19 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import lombok.RequiredArgsConstructor;
+import okhttp3.*;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import pl.edu.pw.mini.ingreedio.api.auth.service.AuthService;
 import pl.edu.pw.mini.ingreedio.api.brand.exception.BrandNotFoundException;
 import pl.edu.pw.mini.ingreedio.api.brand.service.BrandService;
@@ -34,10 +42,12 @@ import pl.edu.pw.mini.ingreedio.api.review.model.Review;
 import pl.edu.pw.mini.ingreedio.api.review.service.ReviewService;
 import pl.edu.pw.mini.ingreedio.api.user.model.User;
 import pl.edu.pw.mini.ingreedio.api.user.service.UserService;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 @RequiredArgsConstructor
 public class ProductService {
+    @Autowired
     private final ProductRepository productRepository;
     private final SequenceGeneratorService sequenceGenerator;
     private final UserService userService;
@@ -54,8 +64,8 @@ public class ProductService {
     private final AuthService authService;
 
     private final ModelPatcher<ProductDocument> modelPatcher;
-
-
+    @Value("${bucket.uri}")
+    private String bucketUri;
     @Transactional(readOnly = true)
     public List<ProductDocument> getAllProducts() {
         return productRepository.findAll();
@@ -152,7 +162,37 @@ public class ProductService {
 
         productRepository.deleteById(product.getId());
     }
+    @Transactional
+    public ProductDocument uploadImages(long id,MultipartFile bigImg, MultipartFile smallImg)throws ProductNotFoundException {
+        try {
+            OkHttpClient client=new OkHttpClient().newBuilder().build();
+            MediaType mediaType=MediaType.parse("application/png");
+            RequestBody smlReq=RequestBody.create(mediaType,smallImg.getBytes());
+            RequestBody bigReq=RequestBody.create(mediaType,bigImg.getBytes());
+            RequestBody body=new MultipartBody.Builder().setType(MultipartBody.FORM)
+                    .addFormDataPart("id",String.valueOf(id))
+                    .addFormDataPart("ImgSmall","ImgSmall.png",smlReq)
+                    .addFormDataPart("ImgBig","ImgBig.png",bigReq).build();
+            Request request=new Request.Builder()
+                    .url(bucketUri+"/post_images")
+                    .method("POST",body)
+                    .build();
+            Response res= client.newCall(request).execute();
+            JsonParser parser=new JsonParser();
+            JsonObject obj=parser.parse(res.body().string()).getAsJsonObject();
 
+            ProductDocument product=getProductById(id);
+
+            product.setLargeImageUrl(obj.get("ImgBigUrl").getAsString());
+            product.setSmallImageUrl(obj.get("ImgSmallUrl").getAsString());
+            updateProduct(product);
+            return product;
+        }
+        catch (IOException ex){
+            System.out.println(ex.getMessage());
+        }
+        return null;
+        }
     @Transactional
     public ProductDocument updateProduct(ProductDocument productPatch)
         throws ProductNotFoundException {
