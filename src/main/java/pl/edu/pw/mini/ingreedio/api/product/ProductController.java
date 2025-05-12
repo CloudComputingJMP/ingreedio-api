@@ -161,7 +161,7 @@ public class ProductController {
     )
     @PreAuthorize("hasAnyAuthority('ADD_PRODUCT')")
     @PostMapping(value = "/{id}",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ProductDto> addImages(Authentication authentication,@PathVariable long id,
+    public ResponseEntity<Object> addImages(Authentication authentication,@PathVariable long id,
                                                 @RequestPart(value="bigImg") MultipartFile bigImg,
                                                 @RequestPart(value="smallImg") MultipartFile smallImg){
 

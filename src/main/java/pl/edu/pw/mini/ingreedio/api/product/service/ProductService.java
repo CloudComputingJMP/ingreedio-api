@@ -163,9 +163,9 @@ public class ProductService {
         productRepository.deleteById(product.getId());
     }
     @Transactional
-    public ProductDocument uploadImages(long id,MultipartFile bigImg, MultipartFile smallImg)throws ProductNotFoundException {
+    public Object uploadImages(long id,MultipartFile bigImg, MultipartFile smallImg)throws ProductNotFoundException {
         try {
-            System.out.println(bucketUri);
+
             OkHttpClient client=new OkHttpClient().newBuilder().build();
             MediaType mediaType=MediaType.parse("application/png");
             RequestBody smlReq=RequestBody.create(mediaType,smallImg.getBytes());
@@ -179,20 +179,21 @@ public class ProductService {
                     .method("POST",body)
                     .build();
             Response res= client.newCall(request).execute();
-            JsonParser parser=new JsonParser();
-            JsonObject obj=parser.parse(res.body().string()).getAsJsonObject();
-
-            ProductDocument product=getProductById(id);
-
-            product.setLargeImageUrl(obj.get("ImgBigUrl").getAsString());
-            product.setSmallImageUrl(obj.get("ImgSmallUrl").getAsString());
-            updateProduct(product);
-            return product;
+            JsonObject jsonObject = JsonParser.parseString(res.body().string()).getAsJsonObject();
+            ProductDocument productDocument = getProductById(id);
+            productDocument.setLargeImageUrl(jsonObject.get("ImgBigUrl").getAsString());
+            productDocument.setSmallImageUrl(jsonObject.get("ImgSmallUrl").getAsString());
+            productRepository.save(productDocument);
+            return productDocument;
         }
-        catch (IOException ex){
+        catch (IOException ex) {
             System.out.println(ex.getMessage());
+            throw new ProductNotFoundException(id);
         }
-        return null;
+        catch (Exception ex){
+            ex.printStackTrace();
+            throw ex;
+        }
         }
     @Transactional
     public ProductDocument updateProduct(ProductDocument productPatch)
