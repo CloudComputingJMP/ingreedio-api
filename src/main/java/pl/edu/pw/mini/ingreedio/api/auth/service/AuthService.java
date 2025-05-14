@@ -53,7 +53,8 @@ public class AuthService {
         String jwtToken = jwtService.generateToken(jwtClaimsService
             .getJwtUserClaimsByAuthInfo(authInfo));
         RefreshToken refreshToken = refreshTokenService.refreshToken(token);
-        return JwtAuthTokens.builder().accessToken(jwtToken).refreshToken(refreshToken).build();
+        Boolean isMod=authInfo.getRoles().stream().map(Role::getName).anyMatch(n->n.equals("MODERATOR"));
+        return JwtAuthTokens.builder().accessToken(jwtToken).refreshToken(refreshToken).isMod(isMod).build();
     }
 
     @Transactional
@@ -70,8 +71,9 @@ public class AuthService {
         AuthInfo authInfo = (AuthInfo) authentication.getPrincipal();
         String jwtToken = jwtService.generateToken(jwtClaimsService
             .getJwtUserClaimsByAuthInfo(authInfo));
+        Boolean isMod=authInfo.getRoles().stream().map(Role::getName).anyMatch(n->n.equals("MODERATOR"));
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(authInfo);
-        return JwtAuthTokens.builder().accessToken(jwtToken).refreshToken(refreshToken).build();
+        return JwtAuthTokens.builder().accessToken(jwtToken).refreshToken(refreshToken).isMod(isMod).build();
     }
 
 

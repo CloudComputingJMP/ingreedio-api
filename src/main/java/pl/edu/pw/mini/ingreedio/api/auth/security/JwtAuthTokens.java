@@ -4,5 +4,5 @@ import lombok.Builder;
 import pl.edu.pw.mini.ingreedio.api.auth.model.RefreshToken;
 
 @Builder
-public record JwtAuthTokens(String accessToken, RefreshToken refreshToken) {
+public record JwtAuthTokens(String accessToken, RefreshToken refreshToken,Boolean isMod) {
 }
