@@ -1,12 +1,7 @@
 package pl.edu.pw.mini.ingreedio.api.product.service;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import com.google.gson.JsonElement;
@@ -28,6 +23,7 @@ import pl.edu.pw.mini.ingreedio.api.category.service.CategoryService;
 import pl.edu.pw.mini.ingreedio.api.common.util.ModelPatcher;
 import pl.edu.pw.mini.ingreedio.api.ingredient.service.IngredientService;
 import pl.edu.pw.mini.ingreedio.api.product.criteria.ProductCriteria;
+import pl.edu.pw.mini.ingreedio.api.product.dto.AskAIDto;
 import pl.edu.pw.mini.ingreedio.api.product.exception.ProductNotFoundException;
 import pl.edu.pw.mini.ingreedio.api.product.model.BrandDocument;
 import pl.edu.pw.mini.ingreedio.api.product.model.CategoryDocument;
@@ -66,6 +62,8 @@ public class ProductService {
     private final ModelPatcher<ProductDocument> modelPatcher;
     @Value("${bucket.uri}")
     private String bucketUri;
+    @Value("${recommendation.url}")
+    private String recommendationUrl;
     @Transactional(readOnly = true)
     public List<ProductDocument> getAllProducts() {
         return productRepository.findAll();
@@ -161,6 +159,30 @@ public class ProductService {
         // TODO: remove all product reviews!!!
 
         productRepository.deleteById(product.getId());
+    }
+    @Transactional
+    public List<ProductDocument> askAI(AskAIDto askAIDto) {
+        try {
+            OkHttpClient client = new OkHttpClient().newBuilder().build();
+            MediaType mediaType = MediaType.parse("application/json");
+            String base = "{\"query\": \" %s \",\"k\": %d }";
+            String content=String.format(base,askAIDto.query(),askAIDto.kNeighbours());
+            RequestBody body = RequestBody.create(mediaType,content);
+            Request request = new Request.Builder()
+                    .url(recommendationUrl)
+                    .method("POST", body)
+                    .addHeader("Content-Type", "application/json")
+                    .build();
+            Response response = client.newCall(request).execute();
+            String responseBody = response.body().string();
+            List<Long>arr= Arrays.stream(
+                            responseBody.replace("[", "").replace("]", "").split(","))
+                    .map(Long::parseLong).toList();
+            return productRepository.findAllById(arr);
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
     @Transactional
     public Object uploadImages(long id,MultipartFile bigImg, MultipartFile smallImg)throws ProductNotFoundException {

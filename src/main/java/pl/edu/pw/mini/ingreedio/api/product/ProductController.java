@@ -29,10 +29,7 @@ import org.zalando.problem.Problem;
 import org.zalando.problem.Status;
 import pl.edu.pw.mini.ingreedio.api.auth.model.AuthInfo;
 import pl.edu.pw.mini.ingreedio.api.common.validation.ValidationGroups;
-import pl.edu.pw.mini.ingreedio.api.product.dto.ProductDto;
-import pl.edu.pw.mini.ingreedio.api.product.dto.ProductPageDto;
-import pl.edu.pw.mini.ingreedio.api.product.dto.ProductRequestDto;
-import pl.edu.pw.mini.ingreedio.api.product.dto.ProductViewDto;
+import pl.edu.pw.mini.ingreedio.api.product.dto.*;
 import pl.edu.pw.mini.ingreedio.api.product.exception.ProductNotFoundException;
 import pl.edu.pw.mini.ingreedio.api.product.model.ProductDocument;
 import pl.edu.pw.mini.ingreedio.api.product.service.PaginationService;
@@ -111,7 +108,31 @@ public class ProductController {
 
         return ResponseEntity.ok(new ProductPageDto(productsDtos, products.getTotalPages()));
     }
+    @Operation(summary = "Get recommendation from ai",
+            description = "fetches info of recommended products.",
+            security = @SecurityRequirement(name = "Bearer Authentication")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Recommendations retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = ProductDto.class))),
+            @ApiResponse(responseCode = "500", description = "Internal System Error", content = @Content)
+    })
+    @PostMapping("/AskAI")
+    public ResponseEntity<List<ProductViewDto>> askAI(Authentication authentication,@RequestBody AskAIDto askAIDto) {
 
+        User user = (authentication != null && authentication.isAuthenticated())
+                ? userService.getUser(authentication) : null;
+        List<ProductDocument> products=productService.askAI(askAIDto);
+        List<ProductViewDto> productsDtos = products
+                .stream()
+                .map(product -> modelMapper
+                        .map(product, ProductViewDto.ProductViewDtoBuilder.class)
+                        .isLiked(user != null && productService.isProductLikedByUser(product, user))
+                        .build()
+                )
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(productsDtos);
+    }
     @Operation(summary = "Get full info of a specific product",
         description = "Fetches detailed information of a product based on the provided product ID.",
         security = @SecurityRequirement(name = "Bearer Authentication")
