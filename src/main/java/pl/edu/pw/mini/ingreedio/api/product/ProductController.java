@@ -118,7 +118,7 @@ public class ProductController {
             @ApiResponse(responseCode = "500", description = "Internal System Error", content = @Content)
     })
     @PostMapping("/AskAI")
-    public ResponseEntity<List<ProductViewDto>> askAI(Authentication authentication,@RequestBody AskAIDto askAIDto) {
+    public ResponseEntity<ProductPageDto> askAI(Authentication authentication,@RequestBody AskAIDto askAIDto) {
 
         User user = (authentication != null && authentication.isAuthenticated())
                 ? userService.getUser(authentication) : null;
@@ -131,7 +131,7 @@ public class ProductController {
                         .build()
                 )
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(productsDtos);
+        return ResponseEntity.ok(new ProductPageDto(productsDtos,1));
     }
     @Operation(summary = "Get full info of a specific product",
         description = "Fetches detailed information of a product based on the provided product ID.",

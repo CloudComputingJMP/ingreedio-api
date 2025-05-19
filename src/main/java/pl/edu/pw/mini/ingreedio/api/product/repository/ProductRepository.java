@@ -1,6 +1,10 @@
 package pl.edu.pw.mini.ingreedio.api.product.repository;
 
+import java.util.Collection;
 import java.util.Optional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 import pl.edu.pw.mini.ingreedio.api.product.model.ProductDocument;

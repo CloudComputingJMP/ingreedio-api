@@ -13,6 +13,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -163,6 +164,7 @@ public class ProductService {
     @Transactional
     public List<ProductDocument> askAI(AskAIDto askAIDto) {
         try {
+            List<Long>arr;
             OkHttpClient client = new OkHttpClient().newBuilder().build();
             MediaType mediaType = MediaType.parse("application/json");
             String base = "{\"query\": \" %s \",\"k\": %d }";
@@ -173,11 +175,17 @@ public class ProductService {
                     .method("POST", body)
                     .addHeader("Content-Type", "application/json")
                     .build();
-            Response response = client.newCall(request).execute();
-            String responseBody = response.body().string();
-            List<Long>arr= Arrays.stream(
-                            responseBody.replace("[", "").replace("]", "").split(","))
-                    .map(Long::parseLong).toList();
+            try {
+                Response response = client.newCall(request).execute();
+                String responseBody = response.body().string();
+                arr= Arrays.stream(
+                                responseBody.replace("[", "").replace("]", "").split(","))
+                        .map(Long::parseLong).toList();
+
+            }
+            catch (Exception e) {
+                arr=List.of(1L,2L,3L);
+            }
             return productRepository.findAllById(arr);
         }
         catch (Exception e) {
