@@ -5,6 +5,7 @@ import static org.springframework.data.mongodb.core.FindAndModifyOptions.options
 
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -19,12 +20,12 @@ public class SequenceGeneratorService {
 
     public Long generateSequence(String seqName) {
         Query query = new Query(Criteria.where("id").is(seqName));
-        Update update = new Update().inc("seq", 1);
-        DatabaseSequenceDocument counter = mongoOperations
-            .findAndModify(query,
-                update, options().returnNew(true).upsert(true),
-                DatabaseSequenceDocument.class);
+        DatabaseSequenceDocument current = mongoOperations.findOne(query, DatabaseSequenceDocument.class);
 
-        return !Objects.isNull(counter) ? counter.getSeq() : 1;
+        long seq = (current != null ? current.getSeq() : 0) + 1;
+        Update update = new Update().set("seq", seq);
+        mongoOperations.upsert(query, update, DatabaseSequenceDocument.class);
+
+        return seq;
     }
 }

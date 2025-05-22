@@ -31,6 +31,7 @@ import pl.edu.pw.mini.ingreedio.api.auth.model.AuthInfo;
 import pl.edu.pw.mini.ingreedio.api.common.validation.ValidationGroups;
 import pl.edu.pw.mini.ingreedio.api.product.dto.*;
 import pl.edu.pw.mini.ingreedio.api.product.exception.ProductNotFoundException;
+import pl.edu.pw.mini.ingreedio.api.product.mapper.CustomProductMapper;
 import pl.edu.pw.mini.ingreedio.api.product.model.ProductDocument;
 import pl.edu.pw.mini.ingreedio.api.product.service.PaginationService;
 import pl.edu.pw.mini.ingreedio.api.product.service.ProductCriteriaService;
@@ -51,6 +52,7 @@ public class ProductController {
     private final ProductService productService;
     private final PaginationService paginationService;
     private final ProductCriteriaService productCriteriaService;
+    private final CustomProductMapper customProductMapper;
 
     private final ModelMapper modelMapper;
 
@@ -168,7 +170,7 @@ public class ProductController {
     @PostMapping
     public ResponseEntity<ProductDto> addProduct(
         @RequestBody @Validated(ValidationGroups.Put.class) ProductRequestDto productRequest) {
-        ProductDocument product = modelMapper.map(productRequest, ProductDocument.class);
+        ProductDocument product = customProductMapper.map(productRequest);
 
         ProductDocument savedProduct = productService
             .addProduct(productService.makeProductFieldsValid(product));
