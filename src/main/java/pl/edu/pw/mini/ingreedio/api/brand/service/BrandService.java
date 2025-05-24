@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.edu.pw.mini.ingreedio.api.brand.exception.BrandNotFoundException;
@@ -26,5 +27,8 @@ public class BrandService {
 
     public List<Brand> getAllBrands() {
         return brandRepository.findAll();
+    }
+    public List<Brand> getBrandsByName(String name,int size) {
+        return brandRepository.findByNameContainsIgnoreCase(name, Pageable.ofSize(size));
     }
 }

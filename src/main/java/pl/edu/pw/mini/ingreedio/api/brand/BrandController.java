@@ -43,8 +43,11 @@ public class BrandController {
 
     @Operation(summary = "Get all brands", description = "Get all existing brands")
     @GetMapping
-    public ResponseEntity<List<BrandDto>> getAllBrands() {
-        List<Brand> brands = brandService.getAllBrands();
+    public ResponseEntity<List<BrandDto>> getAllBrands(
+                                                       @RequestParam(defaultValue = "10") int count,
+                                                       @RequestParam(defaultValue = "") String query) {
+
+        List<Brand> brands = brandService.getBrandsByName(query, count);
         List<BrandDto> brandDtos = brands.stream()
                 .map(brand -> modelMapper.map(brand, BrandDto.class))
                 .toList();
