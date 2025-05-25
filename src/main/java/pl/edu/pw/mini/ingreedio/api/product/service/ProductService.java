@@ -209,7 +209,7 @@ public class ProductService {
                     .method("POST",body)
                     .build();
             Response res= client.newCall(request).execute();
-            System.out.println(res.body().string());
+
             JsonObject jsonObject = JsonParser.parseString(res.body().string()).getAsJsonObject();
             ProductDocument productDocument = getProductById(id);
             productDocument.setLargeImageUrl(jsonObject.get("ImgBigUrl").getAsString());
