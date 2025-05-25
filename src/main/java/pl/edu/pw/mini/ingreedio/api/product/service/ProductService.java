@@ -209,6 +209,7 @@ public class ProductService {
                     .method("POST",body)
                     .build();
             Response res= client.newCall(request).execute();
+            System.out.println(res.body().string());
             JsonObject jsonObject = JsonParser.parseString(res.body().string()).getAsJsonObject();
             ProductDocument productDocument = getProductById(id);
             productDocument.setLargeImageUrl(jsonObject.get("ImgBigUrl").getAsString());
@@ -217,6 +218,7 @@ public class ProductService {
             return productDocument;
         }
         catch (IOException ex) {
+            System.out.println();
             System.out.println(ex.getMessage());
             throw new ProductNotFoundException(id);
         }
